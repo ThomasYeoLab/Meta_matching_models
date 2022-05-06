@@ -1,8 +1,8 @@
 # Meta_matching_models v1.0
 This folder contains  v1.0 meta matching model trained from the UK Biobank (N = 36,847) and example to run it. This is the model used in Figure 7 of the He et al., 2020.
 
-## Incoming release
-In He et al., 2020, we tested our MM model on datasets with ICA-fixed and the MM model worked well. We are going to release a new version of MM model which also generalizes well on datasets with GSR.
+## Upcoming release
+In He et al., 2020, we tested our MM model on datasets with ICA-FIX. We will release a new version of MM model which also generalizes well on datasets with GSR.
 
 ## Reference
 He T, An L, Feng J, Bzdok D, Eickhoff SB, Yeo BTT. **Meta-matching: a simple approach to translate predictive models from big to small data**. BioRxiv, 2020.08.10.245373, under review.
