@@ -83,7 +83,7 @@ def demean_norm(val):
     return normalize(val, axis=1, norm='l2')
 
 
-def stacking(y_pred_k, y_pred_test, y_k):
+def stacking(y_pred_k, y_pred_test, y_k, alpha=[0.00001, 0.0001, 0.001, 0.004, 0.007, 0.01, 0.04, 0.07, 0.1, 0.4, 0.7, 1, 1.5, 2, 2.5, 3, 3.5, 4, 5, 10, 15, 20]):
     '''perform stacking
 
     Args:
@@ -92,11 +92,12 @@ def stacking(y_pred_k, y_pred_test, y_k):
         y_pred_test (ndarray): predicted for remaining test subjects with base
             model trained on training meta-set
         y_k (ndarray): original test data on k subjects
+        alpha (list): Regularization strength range for KRR
     
     Returns:
         ndarray: predicted value on remaining test subjects with stacking
     '''
-    parameters = {'alpha': [5, 10, 15, 20]}
+    parameters = {'alpha': alpha}
     krr = KernelRidge()
     cv = KFold(n_splits=5, shuffle=True, random_state=42)
     clf = GridSearchCV(krr, parameters, cv=cv)
