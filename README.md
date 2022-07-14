@@ -2,7 +2,7 @@
 This repo contains pre-trained Meta-matching models. If you want to train your own meta-matching model from scratch, please visit our [CBIG repo](https://github.com/ThomasYeoLab/CBIG/tree/master/stable_projects/predict_phenotypes/He2022_MM).
 
 ## Reference
-He T, An L, Feng J, Bzdok D, Eickhoff SB, Yeo BTT. **Meta-matching: a simple approach to translate predictive models from big to small data**. BioRxiv, 2020.08.10.245373, under review.
+He, T., An, L., Feng, J., Bzdok, D., Eickhoff, S.B. and Yeo, B.T., 2022. [**Meta-matching as a simple framework to translate phenotypic predictive models from big to small data**](https://doi.org/10.1038/s41593-022-01059-9), Nat Neurosci 25, 795-804.
 
 ## Background
 
