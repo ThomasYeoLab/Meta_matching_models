@@ -14,6 +14,8 @@ There is significant interest in using brain imaging to predict phenotypes, such
 Please check the detailed readme under each folder.
 ### `v1.0` folder
 * It contains first release of the meta-matching model.
+### `v1.1` folder
+ * It contains updated release of meta-matching model, which was trained using data after removing withdrawn subjects and uses z-normalized input functional connectivity.
 
 ## License ##
 See our [LICENSE](https://github.com/ThomasYeoLab/CBIG/blob/master/LICENSE.md) file for license rights and limitations (MIT).

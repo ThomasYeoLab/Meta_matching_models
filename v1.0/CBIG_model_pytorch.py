@@ -168,6 +168,62 @@ class multi_task_dataset(torch.utils.data.Dataset):
     def __len__(self):
         return int(self.x.shape[0])
 
+class dnn(nn.Module):
+    '''DNN model (2 - 5 layers)
+    '''
+
+    def __init__(self, input_size, n_layer, n_l1, n_l2, n_l3, n_l4, dropout, output_size=1):
+        """initialization of 3 layer DNN
+
+        Args:
+            input_size (int): dimension of input data
+            n_layer (int): number of layers
+            n_l1 (int): number of node in first layer
+            n_l2 (int): number of node in second layer
+            n_l3 (int): number of node in third layer
+            n_l4 (int): number of node in fourth layer
+            dropout (float): rate of dropout
+            output_size (int, optional): dimension of output data
+        """
+        super(dnn, self).__init__()
+
+        self.layers = nn.ModuleList()
+        n_hidden = [n_l1, n_l2, n_l3, n_l4]
+        self.layers.append(nn.Sequential(
+            nn.Dropout(p=dropout),
+            nn.Linear(input_size, n_l1),
+            nn.ReLU(),
+            nn.BatchNorm1d(n_l1),
+        ))
+
+        for i in range(n_layer):
+            self.layers.append(nn.Sequential(
+                nn.Dropout(p=dropout),
+                nn.Linear(n_hidden[i], n_hidden[i + 1]),
+                nn.ReLU(),
+                nn.BatchNorm1d(n_hidden[i + 1]),
+            ))
+        self.layers.append(nn.Sequential(
+            nn.Dropout(p=dropout),
+            nn.Linear(n_hidden[n_layer], output_size),
+        ))
+
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                init.xavier_uniform_(m.weight)
+            elif isinstance(m, nn.Conv1d):
+                init.xavier_uniform_(m.weight)
+            elif isinstance(m, nn.BatchNorm1d):
+                m.weight.data.fill_(1)
+                m.bias.data.zero_()
+            elif isinstance(m, nn.Linear):
+                init.xavier_uniform_(m.weight)
+
+    def forward(self, x):
+        for layer in self.layers:
+            x = layer(x)
+        return x
+
 
 class dnn_5l(nn.Module):
     '''3 layer DNN model
