@@ -2,7 +2,7 @@
 This folder contains  v1.0 meta matching model trained from the UK Biobank (N = 36,847) and example to run it. This is the model used in Figure 7 of the He et al., 2022.
 
 ## Upcoming release
-In He et al., 2022, we tested our MM model on datasets with ICA-FIX. The model does not seem to work so well for data that has undergone global signal regression (GSR). We will be releasing a new MM model that also generalizes well on datasets with GSR. Please stay tune.
+In He et al., 2022, we tested our MM model on datasets with ICA-FIX. The model does not seem to work so well for data that has undergone global signal regression (GSR). Please use [v1.1](https://github.com/ThomasYeoLab/Meta_matching_models/tree/main/v1.1) instead.
 
 ## Reference
 + He, T., An, L., Chen, P., Chen, J., Feng, J., Bzdok, D., Holmes, A.J., Eickhoff, S.B. and Yeo, B.T., 2022. [**Meta-matching as a simple framework to translate phenotypic predictive models from big to small data**](https://doi.org/10.1038/s41593-022-01059-9), Nature Neuroscience 25, 795-804.
