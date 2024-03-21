@@ -1,5 +1,5 @@
 # Meta_matching_models v1.1
-This folder contains  v1.1 meta matching model trained from the UK Biobank (N = 36,834) and example to run it. We removed participants who have withdrawn from the UK Biobank (withdrawn before 16/11/2021) and re-trained DNN. Besides, we performed subject-wise z-normalization to the input FC (functional connectivity) vector, to make the model generalize better across GSR/non-GSR fMRI data.
+This folder contains  v1.1 meta matching model trained from the UK Biobank (N = 36,834) and example to run it. We removed participants who have withdrawn from the UK Biobank (withdrawn before 16/11/2021) and re-trained DNN. Besides, we performed participant-wise normalization to the input FC (functional connectivity) vector (demean and normalize by L2 norm of FC vector for each participant), to make the model generalize better across GSR/non-GSR fMRI data.
 
 
 ## Reference
