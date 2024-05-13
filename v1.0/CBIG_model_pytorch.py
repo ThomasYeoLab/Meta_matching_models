@@ -4,14 +4,17 @@
 Written by Tong He and CBIG under MIT license:
 https://github.com/ThomasYeoLab/CBIG/blob/master/LICENSE.md
 """
+import os
+import time
+import pickle
+import itertools
 
 import torch
 import torch.utils.data
 import torch.nn as nn
 import torch.nn.init as init
+from torch.utils.data import DataLoader
 
-import time
-import itertools
 import numpy as np
 from sklearn.preprocessing import normalize
 from sklearn.kernel_ridge import KernelRidge
@@ -29,6 +32,7 @@ def sum_of_mul(A, B):
         ndarray: sum of multiplication
     '''
     return np.einsum('ij,ij->i', A, B)
+
 
 def covariance_rowwise(A, B):
     '''rowwise covariance computation
@@ -68,6 +72,7 @@ def covariance_rowwise(A, B):
         cov = sum_of_mul(A_mA[:, comb[:, 0]].T, B_mB[:, comb[:, 1]].T)
     rnt[comb[:, 0], comb[:, 1]] = cov
     return np.squeeze(rnt) / (N - 1)
+
 
 def demean_norm(val):
     '''de-mean and normalize data
@@ -138,6 +143,89 @@ def msenanloss(input, target, mask=None):
     return torch_nanmean(ret, mask)
 
 
+def multilayer_metamatching_infer(x, y, model_path, dataset_names):
+    '''Predict using multilayer meta-matching models
+    
+    Args:
+        x (ndarray): input FC data
+        y (ndarray): target phenotype label
+        model_path (str): multilayer meta-matching models' path
+        dataset_names (dict): names of extra-large, large, medium source datasets 
+    
+    Returns:
+        ndarray: prediction on x from multilayer metamatching models
+    '''
+    # Load DNN, which takes FC as input and output 67 phenotypes prediction trained on 67 UK Biobank phenotypes
+    gpu = 0 # modify the gpu number here if you want to use different gpu. 
+    os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")#If the gpu you assigned not availiable, it will assign to cpu
+    path_model_weight = os.path.join(model_path, 'meta_matching_v2.0_model.pkl_torch') 
+    net = torch.load(path_model_weight, map_location=device)
+    net.to(device)
+    net.train(False)
+    print(net)
+
+    # Prepare data for DNN
+    n_subj = x.shape[0]
+    batch_size = 16
+    y_dummy = np.zeros(y.shape)
+    dset = multi_task_dataset(x, y_dummy, True)
+    dataLoader = DataLoader(dset, batch_size=batch_size, shuffle=False, num_workers=1)
+
+    # Phenotypic prediction from extra-large source dataset
+    dataset_XL = dataset_names['extra-large']
+    n_phe_dict = {}
+    models = pickle.load(open(os.path.join(model_path, dataset_XL + '_rr_models.sav'), 'rb'))
+    n_phe_dict[dataset_XL] = len(models.keys())
+
+    y_pred_dnn_XL = np.zeros((0, n_phe_dict[dataset_XL]))
+    for (x_batch, _) in dataLoader:
+        x_batch= x_batch.to(device)
+        outputs = net(x_batch)
+        y_pred_dnn_XL = np.concatenate((y_pred_dnn_XL, outputs.data.cpu().numpy()), axis=0)
+
+    y_pred_rr_XL = np.zeros((x.shape[0], n_phe_dict[dataset_XL]))
+    for phe_idx, phe_name in enumerate(models):
+        y_pred_rr_XL[:, phe_idx] = models[phe_name].predict(x)
+        
+    y_pred_rr_1layer = {}
+    y_pred_rr_2layer = {}
+    
+    # Phenotypic prediction from large source dataset
+    dataset_L = dataset_names['large']
+    models_1layer = pickle.load(open(os.path.join(model_path, dataset_L + '_rr_models_base.sav'), 'rb'))
+    models_2layer = pickle.load(open(os.path.join(model_path, dataset_L + '_rr_models_multilayer.sav'), 'rb'))
+    n_phe_dict[dataset_L] = len(models_1layer.keys())
+    y_pred_rr_1layer[dataset_L] = np.zeros((n_subj, n_phe_dict[dataset_L]))
+    y_pred_rr_2layer[dataset_L] = np.zeros((n_subj, n_phe_dict[dataset_L]))
+    
+    for phe_idx, phe_name in enumerate(models_1layer):
+        y_pred_rr_1layer[dataset_L][:, phe_idx] = models_1layer[phe_name].predict(x)
+    
+    for phe_idx, phe_name in enumerate(models_2layer):
+        x_stacking = np.concatenate((y_pred_dnn_XL, y_pred_rr_XL), axis = 1)
+        y_pred_rr_2layer[dataset_L][:, phe_idx] = models_2layer[phe_name].predict(x_stacking)
+
+    # Phenotypic prediction from medium source dataset
+    for dataset_M in dataset_names['medium']:
+        models_1layer = pickle.load(open(os.path.join(model_path, dataset_M + '_rr_models_base.sav'), 'rb'))
+        models_2layer = pickle.load(open(os.path.join(model_path, dataset_M + '_rr_models_multilayer.sav'), 'rb'))
+        n_phe =n_phe_dict[dataset_M] = len(models_1layer.keys())
+        y_pred_rr_1layer[dataset_M] = np.zeros((n_subj, n_phe))
+        y_pred_rr_2layer[dataset_M] = np.zeros((n_subj, n_phe))
+        
+        for phe_idx, phe_name in enumerate(models_1layer):
+            y_pred_rr_1layer[dataset_M][:, phe_idx] = models_1layer[phe_name].predict(x)
+            
+        for phe_idx, phe_name in enumerate(models_2layer):
+            x_stacking = np.concatenate((y_pred_dnn_XL, y_pred_rr_XL, y_pred_rr_1layer[dataset_L]), axis = 1)
+            y_pred_rr_2layer[dataset_M][:, phe_idx] = models_2layer[phe_name].predict(x_stacking)
+
+    y_pred = np.concatenate([y_pred_dnn_XL] + [y_pred_rr_XL] + 
+                                  list(y_pred_rr_1layer.values()) +
+                                  list(y_pred_rr_2layer.values()), axis = 1)    
+    return y_pred
+
 class multi_task_dataset(torch.utils.data.Dataset):
     """PyTorch dataset class
 
@@ -167,6 +255,7 @@ class multi_task_dataset(torch.utils.data.Dataset):
 
     def __len__(self):
         return int(self.x.shape[0])
+
 
 class dnn(nn.Module):
     '''DNN model (2 - 5 layers)
@@ -471,11 +560,3 @@ class dnn_2l(nn.Module):
         x = self.fc1(x)
         x = self.fc2(x)
         return x
-
-
-def main():
-    pass
-
-
-if __name__ == '__main__':
-    main()

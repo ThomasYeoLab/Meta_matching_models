@@ -15,7 +15,9 @@ Please check the detailed readme under each folder.
 ### `v1.0` folder
 * It contains first release of the meta-matching model.
 ### `v1.1` folder
-* It contains updated release of meta-matching model, which generalizes better across GSR/non-GSR fMRI data.
+* It contains updated release of meta-matching model, which was trained using data after removing withdrawn participants (N=36,834) and uses normalized input functional connectivity.
+### `v2.0` folder
+* It contains multilayer meta-matching models (Chen et al., 2023), which was trained from five source datasets (with sample sizes ranging from 862 participants to 36,834 participants)
 
 ## License ##
 See our [LICENSE](https://github.com/ThomasYeoLab/CBIG/blob/master/LICENSE.md) file for license rights and limitations (MIT).
