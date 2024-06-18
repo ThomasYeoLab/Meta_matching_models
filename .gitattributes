@@ -1,4 +1,0 @@
-*.sav filter=lfs diff=lfs merge=lfs -text
-*.pkl_torch filter=lfs diff=lfs merge=lfs -text
-/home/pschen/orage/ThomasYeoLab/Meta_matching_models/v2.0/models/meta_matching_v2.0_model.pkl_torch filter=lfs diff=lfs merge=lfs -text
-/home/pschen/storage/ThomasYeoLab/Meta_matching_models/v2.0/models/ABCD_rr_models_multilayer.sav/home/pschen/storage/ThomasYeoLab/Meta_matching_models/v2.0/models/ABCD_rr_models_multilayer.sav filter=lfs diff=lfs merge=lfs -text
