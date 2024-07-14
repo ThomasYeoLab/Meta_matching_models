@@ -21,7 +21,7 @@ Please check the detailed readme under each folder.
 ### rs-fMRI
 `rs-fMRI` folder contains meta-matching models for resting-state functional MRI (rs-fMRI) data
 ### T1
-`T1` folder contains meta-matching models for T1-weighted image data (will release soon)
+`T1` folder contains meta-matching models for T1-weighted image data
 ## License ##
 See our [LICENSE](https://github.com/ThomasYeoLab/CBIG/blob/master/LICENSE.md) file for license rights and limitations (MIT).
 
