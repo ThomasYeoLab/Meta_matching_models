@@ -3,7 +3,7 @@ This repo contains pre-trained Meta-matching models. If you want to train your o
 
 ## References
 + He, T., An, L., Chen, P., Chen, J., Feng, J., Bzdok, D., Holmes, A.J., Eickhoff, S.B. and Yeo, B.T., 2022. [**Meta-matching as a simple framework to translate phenotypic predictive models from big to small data**](https://doi.org/10.1038/s41593-022-01059-9), Nature Neuroscience 25, 795-804.
-+ Chen, P., An, L., Wulan, N., Zhang, C., Zhang, S., Ooi, L. Q. R., ... & Yeo, B. T. (2023). [**Multilayer meta-matching: translating phenotypic prediction models from multiple datasets to small data**](https://www.biorxiv.org/content/10.1101/2023.12.05.569848v1.abstract). bioRxiv, 2023-12.
++ Chen, P., An, L., Wulan, N., Zhang, C., Zhang, S., Ooi, L. Q. R., ... & Yeo, B. T. (2024). [**Multilayer meta-matching: translating phenotypic prediction models from multiple datasets to small data**](https://direct.mit.edu/imag/article/doi/10.1162/imag_a_00233/123369/Multilayer-meta-matching-Translating-phenotypic). Imaging Neuroscience, 2, 1-22.
 + Wulan, N., An, L., Zhang, C., Kong, R., Chen, P., Bzdok, D., ... & Yeo, B. T. (2024). [**Translating phenotypic prediction models from big to small anatomical MRI data using meta-matching**](https://www.biorxiv.org/content/10.1101/2023.12.31.573801v1.abstract). bioRxiv, 2023-12.
 
 ## Background
@@ -21,7 +21,7 @@ Please check the detailed readme under each folder.
 ### rs-fMRI
 `rs-fMRI` folder contains meta-matching models for resting-state functional MRI (rs-fMRI) data
 ### T1
-`T1` folder contains meta-matching models for T1-weighted image data (will release soon)
+`T1` folder contains meta-matching models for T1-weighted image data
 ## License ##
 See our [LICENSE](https://github.com/ThomasYeoLab/CBIG/blob/master/LICENSE.md) file for license rights and limitations (MIT).
 
@@ -29,3 +29,4 @@ See our [LICENSE](https://github.com/ThomasYeoLab/CBIG/blob/master/LICENSE.md) f
 Please contact He Tong at hetong1115@gmail.com, Lijun An at anlijun.cn@gmail.com, Pansheng Chen at chenpansheng@gmail.com and Thomas Yeo at yeoyeo02@gmail.com.
 
 Happy researching!
+
