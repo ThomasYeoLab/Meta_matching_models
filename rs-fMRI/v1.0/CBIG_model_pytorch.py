@@ -7,6 +7,7 @@ https://github.com/ThomasYeoLab/CBIG/blob/master/LICENSE.md
 import os
 import time
 import pickle
+import hashlib
 import itertools
 
 import torch
@@ -20,6 +21,45 @@ from sklearn.preprocessing import normalize
 from sklearn.kernel_ridge import KernelRidge
 from sklearn.model_selection import KFold, GridSearchCV
 
+
+def check_models_v20(model_path):
+    """
+    Check whether model files are correct by calculating the MD5 checksum.
+
+    Args:
+        model_path (str): The path to the model files.
+
+    """
+    # reference MD5 checksum values
+    MD5_ref = {"meta_matching_v2.0_model.pkl_torch": "588ef6159617a6a9eda793ef3f812032",
+               "UKBB_rr_models.sav": "a1a07906bee1702a9b33e2afc0ff022d",
+               "ABCD_rr_models_multilayer.sav": "a8775a11a750aa7a50eaab2098ceb877",
+               "ABCD_rr_models_base.sav": "c88f8d9e8b0d9eefc7c1817f246b73b3",
+               "GSP_rr_models_base.sav": "4e62f1cfc5ee0df74b1df13e164137d1",
+               "GSP_rr_models_multilayer.sav": "51c03f6e235f2fd1e72c605aa15f3603",
+               "HBN_rr_models_base.sav": "c117dd8325fbfd4c223eb3529bd8f0ec",
+               "HBN_rr_models_multilayer.sav": "5825fc86cc44e55eae7e309991b7f2ff",
+               "eNKI_rr_models_base.sav": "257c67670797e0c5015bc94a4ea1d279",
+               "eNKI_rr_models_multilayer.sav": "f3db2f85ac6134f8829387a5056f1358"
+    }
+    for model_file in MD5_ref:
+        file_path = os.path.join(model_path, model_file)
+        assert os.path.isfile(file_path), file_path + " doesn't exist."
+
+        md5_hash = hashlib.md5()
+        with open(file_path, "rb") as f:
+            # Define the chunk size (8KB)
+            chunk_size = 8192
+            while True:
+                # Read a chunk of data from the file
+                chunk = f.read(chunk_size)
+                if not chunk:
+                    break
+                # Update the MD5 hash object with the chunk
+                md5_hash.update(chunk)
+        assert md5_hash.hexdigest() == MD5_ref[model_file], \
+            model_file + " is not update-to-date, please download the latest version."
+            
 
 def sum_of_mul(A, B):
     '''sum of multiplication (inner product) of two array
@@ -154,16 +194,16 @@ def multilayer_metamatching_infer(x, y, model_path, dataset_names):
     
     Returns:
         ndarray: prediction on x from multilayer metamatching models
+        list: names of phenotypes be predicted
     '''
-    # Load DNN, which takes FC as input and output 67 phenotypes prediction trained on 67 UK Biobank phenotypes
+    # Load DNN, which takes FC as input and outputs 67 phenotypes prediction trained on 67 UK Biobank phenotypes
     gpu = 0 # modify the gpu number here if you want to use different gpu. 
     os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu)
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")#If the gpu you assigned not availiable, it will assign to cpu
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     path_model_weight = os.path.join(model_path, 'meta_matching_v2.0_model.pkl_torch') 
     net = torch.load(path_model_weight, map_location=device)
     net.to(device)
     net.train(False)
-    print(net)
 
     # Prepare data for DNN
     n_subj = x.shape[0]
@@ -198,10 +238,12 @@ def multilayer_metamatching_infer(x, y, model_path, dataset_names):
     n_phe_dict[dataset_L] = len(models_1layer.keys())
     y_pred_rr_1layer[dataset_L] = np.zeros((n_subj, n_phe_dict[dataset_L]))
     y_pred_rr_2layer[dataset_L] = np.zeros((n_subj, n_phe_dict[dataset_L]))
-    
+
+    RR_names = [] # record phenotype names from RR model
     for phe_idx, phe_name in enumerate(models_1layer):
         y_pred_rr_1layer[dataset_L][:, phe_idx] = models_1layer[phe_name].predict(x)
-    
+        RR_names.append(phe_name)
+
     for phe_idx, phe_name in enumerate(models_2layer):
         x_stacking = np.concatenate((y_pred_dnn_XL, y_pred_rr_XL), axis = 1)
         y_pred_rr_2layer[dataset_L][:, phe_idx] = models_2layer[phe_name].predict(x_stacking)
@@ -216,15 +258,27 @@ def multilayer_metamatching_infer(x, y, model_path, dataset_names):
         
         for phe_idx, phe_name in enumerate(models_1layer):
             y_pred_rr_1layer[dataset_M][:, phe_idx] = models_1layer[phe_name].predict(x)
+            RR_names.append(phe_name)
             
         for phe_idx, phe_name in enumerate(models_2layer):
             x_stacking = np.concatenate((y_pred_dnn_XL, y_pred_rr_XL, y_pred_rr_1layer[dataset_L]), axis = 1)
             y_pred_rr_2layer[dataset_M][:, phe_idx] = models_2layer[phe_name].predict(x_stacking)
 
     y_pred = np.concatenate([y_pred_dnn_XL] + [y_pred_rr_XL] + 
-                                  list(y_pred_rr_1layer.values()) +
-                                  list(y_pred_rr_2layer.values()), axis = 1)    
-    return y_pred
+                            list(y_pred_rr_1layer.values()) +
+                            list(y_pred_rr_2layer.values()), axis = 1)
+
+    y_names = []  # record predicted phenotype names
+    UKBB_names = []
+    phe_UKBB_txt = os.path.join(os.path.dirname(model_path), "UKBB_phe_list.txt")
+    with open(phe_UKBB_txt, 'r') as f:
+        UKBB_names = [line.strip() for line in f.readlines()]
+    y_names.extend([name + '_DNN' for name in UKBB_names])
+    y_names.extend([name + '_KRR' for name in UKBB_names])
+    y_names.extend([name + '_1layer' for name in RR_names])
+    y_names.extend([name + '_2layer' for name in RR_names])
+
+    return y_pred, y_names
 
 class multi_task_dataset(torch.utils.data.Dataset):
     """PyTorch dataset class
